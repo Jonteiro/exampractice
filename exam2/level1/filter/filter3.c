@@ -1,0 +1,110 @@
+#define _GNU_SOURCE
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <errno.h>
+
+int main(int ac, char **av){
+	if(ac != 2){
+		perror("Error: arg number");
+		return(1);
+	}
+	char *filter = av[1];
+	size_t fillen = strlen(filter);
+	if(fillen == 0){
+		perror("Error: empty argument");
+		return(1);
+	}
+	size_t cap = 10;
+	size_t r = 0;
+	size_t len = 0;
+	char *buff = malloc(sizeof(char) * cap);
+	while((r = read(0, buff + len, cap - len)) > 0){
+		len += r;
+		if(len == cap){
+			cap *= 2;
+			buff = realloc(buff, cap);
+			if(!buff)
+				return(1);
+		}
+	}
+	buff = realloc(buff, cap + 1);
+	buff[len] = '\0';
+
+	char *aster = malloc(sizeof(char) * fillen);
+	size_t i = 0;
+	while(i < fillen){
+		aster[i] = '*';
+		i++;
+	}
+	char *dupe = buff;
+	size_t remaining = len;
+	while(remaining >= fillen){
+		char *found = memmem(dupe, len, filter, fillen);
+		if(!found)
+			break ;
+		size_t offset = (size_t)(found - buff);
+		memmove(buff + offset, aster, fillen);
+		dupe = buff + offset + fillen;
+		remaining = len - (dupe - buff);
+	}
+	write(1, buff, len);
+	free(aster);
+	return(0);
+}
+
+
+
+// Assignment name: filter
+// Expected files: filter.c
+// Allowed functions: read, write, strlen, memmem, memmove, malloc, calloc,
+// realloc, free, printf, fprintf, stdout, stderr, perror
+// --------------------------------------------------------------------------------
+
+// Write a program that will take one and only one argument.
+
+// Your program will then read from stdin and write all the content read in stdout
+// except that every occurrence of s must be replaced by '*' (as many as the length
+// of s). Your program will be tested with random buffer sizes, using a custom read
+// function. Therefore the buffer being set in your program will be filled with a
+// different number of chars each new call.
+
+
+// For example:
+
+// ./filter bonjour
+// will behave in the same way as:
+// sed 's/bonjour/*******/g'
+
+// ./filter abc
+// will behave in the same way as:
+// sed's/abc/***/g'
+
+// More generally your program must be the equivalent of the shell script filter.sh
+// present in this directory (you can compare your program with it).
+
+// In case of error during a read or a malloc, you must write "Error: " followed by
+// the error message in stderr and return 1.
+
+// If the program is called without arguments or with an empty argument or with multiple
+// arguments, it must return 1.
+
+// For example this should work:
+
+// $> echo 'abcdefaaaabcdeabcabcdabc' | ./filter abc | cat -e
+// ***defaaa***de******d***$
+// $> echo 'ababcabababc' | ./filter ababc | cat -e
+// *****ab*****$
+// $>
+
+// NOTES:
+// memmem includes:
+//                 #define _GNU_SOURCE
+// 			    #include <string.h>
+
+// perror includes:
+//                 #include <errno.h>
+
+// read includes:
+//                 #include <unistd.h>
