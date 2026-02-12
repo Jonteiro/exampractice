@@ -37,7 +37,7 @@ int main(int ac, char **av){
     char *dupe = buff;
     size_t remaining = len;
     while(remaining >= fillen){
-        char *found = memmem(dupe, len, filter, fillen);
+        char *found = memmem(dupe, remaining, filter, fillen);
         if(!found)
             break;
         size_t offset = found - buff;
